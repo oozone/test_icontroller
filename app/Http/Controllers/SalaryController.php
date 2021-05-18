@@ -27,10 +27,11 @@ class SalaryController extends Controller
         $results = [];
         for ($i = 1; $i <= 12; $i++) {
 
+            $month = $i;
             if ($i < 10) {
-                $i = '0' . $i;
+                $month = '0' . $i;
             }
-            $date = Carbon::createFromFormat('Y-m-d', $year . '-' . $i . '-01');
+            $date = Carbon::createFromFormat('Y-m-d', $year . '-' . $month . '-01');
 
             $results[] = [
                 'month' => $date->monthName,
