@@ -2,12 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bonus;
+use App\Models\Salary;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class SalaryController extends Controller
 {
 
+    /**
+     * @param Request $request
+     *
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
     public function getCsv(Request $request)
     {
         $request->validate([
@@ -24,37 +32,25 @@ class SalaryController extends Controller
             }
             $date = Carbon::createFromFormat('Y-m-d', $year . '-' . $i . '-01');
 
-            $results[] = $this->calculateSalaryBonus($date);
+            $results[] = [
+                'month' => $date->monthName,
+                'salaryDay' => (new Salary())->payDate($year, $i)->format('Y-m-d'),
+                'bonusDate' => (new Bonus())->payDate($year, $i)->format('Y-m-d'),
+            ];
         }
 
-        return $this->download($results);
+        try {
+            return $this->download($results);
+        } catch (\Exception $e) {
+            abort(500);
+        }
     }
 
-    private function calculateSalaryBonus(Carbon $date): array
-    {
-
-        // Calculate salary day
-        $endOfMonth = $date->endOfMonth();
-        $endOfMonthWeekDay = $endOfMonth->dayOfWeek;
-        if ($endOfMonthWeekDay == 6 || $endOfMonthWeekDay == 7) {
-            $salaryDate = $endOfMonth::parse('last friday of ' . $date->monthName . ' ' . $date->year);
-        } else {
-            $salaryDate = $date;
-        }
-
-        // Calculate bonus day
-        $bonusDate = (new Carbon($date))->day(15);
-        if ($bonusDate->dayOfWeek == 6 || $bonusDate->dayOfWeek == 7) {
-            $bonusDate = $bonusDate->parse('next wednesday');
-        }
-
-        return [
-            'month' => $date->monthName,
-            'salaryDay' => $salaryDate->format('Y-m-d'),
-            'bonusDate' => $bonusDate->format('Y-m-d'),
-        ];
-    }
-
+    /**
+     * @param $results
+     *
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
     private function download($results)
     {
         $headers = [

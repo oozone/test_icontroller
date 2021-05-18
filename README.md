@@ -6,6 +6,9 @@ To run:
 - npm install
 - npm run dev
 
+Tests:
+- php artisan test
+
 Thanks & kind regards,
 
 Matthias Vanooteghem
